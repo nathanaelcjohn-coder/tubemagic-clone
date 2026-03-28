@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Film, Loader as Loader2, Sparkles } from 'lucide-react';
+import { Film, Loader2, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,8 +25,9 @@ export default function Dashboard() {
   const [error, setError] = useState('');
 
   const handleGenerate = async () => {
-    if (!youtubeUrl || !topic) {
-      setError('Please fill in all fields');
+    // BOUNCER REMOVED: Now we only care if the Topic is missing.
+    if (!topic) {
+      setError('Please describe what your video is about');
       return;
     }
 
@@ -41,7 +42,7 @@ export default function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          youtubeUrl,
+          youtubeUrl: youtubeUrl || '', // Send empty string if no URL
           topic,
           targetLength,
         }),
@@ -97,18 +98,18 @@ export default function Dashboard() {
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="youtube-url" className="text-white">
-                    Inspiration YouTube URL
+                    Inspiration YouTube URL (Optional)
                   </Label>
                   <Input
                     id="youtube-url"
                     type="url"
-                    placeholder="https://youtube.com/watch?v=..."
+                    placeholder="https://youtube.com/watch?v=... (or leave blank)"
                     value={youtubeUrl}
                     onChange={(e) => setYoutubeUrl(e.target.value)}
                     className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
                   />
                   <p className="text-sm text-gray-500">
-                    Paste a YouTube video URL to analyze its style
+                    Optional: Paste a URL to match a specific style
                   </p>
                 </div>
 
@@ -124,9 +125,6 @@ export default function Dashboard() {
                     onChange={(e) => setTopic(e.target.value)}
                     className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
                   />
-                  <p className="text-sm text-gray-500">
-                    Provide detailed information about your video content
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -145,9 +143,6 @@ export default function Dashboard() {
                       <SelectItem value="30">30 minutes</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-sm text-gray-500">
-                    Choose your desired video length
-                  </p>
                 </div>
 
                 {error && (
@@ -158,7 +153,7 @@ export default function Dashboard() {
 
                 <Button
                   onClick={handleGenerate}
-                  disabled={loading || !youtubeUrl || !topic}
+                  disabled={loading || !topic} // BOUNCER REMOVED: Button stays active without URL
                   className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg"
                 >
                   {loading ? (
@@ -178,7 +173,7 @@ export default function Dashboard() {
           </div>
 
           <div>
-            <Card className="bg-gray-800/50 border-gray-700">
+            <Card className="bg-gray-800/50 border-gray-700 h-full">
               <CardHeader>
                 <CardTitle className="text-white">Generated Script</CardTitle>
                 <CardDescription className="text-gray-400">
@@ -190,7 +185,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-center py-20">
                     <div className="text-center">
                       <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-                      <p className="text-gray-400">Analyzing video and generating script...</p>
+                      <p className="text-gray-400">Generating your viral script...</p>
                     </div>
                   </div>
                 ) : generatedScript ? (
@@ -205,7 +200,7 @@ export default function Dashboard() {
                   <div className="flex items-center justify-center py-20 text-gray-500">
                     <div className="text-center">
                       <Film className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                      <p>Fill in the form and click Generate to see your script here</p>
+                      <p>Click Generate to see your script here</p>
                     </div>
                   </div>
                 )}
