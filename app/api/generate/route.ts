@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
 
     // THE DIRECT LINE: We are skipping the SDK and talking to the v1 stable endpoint
     // We'll try Gemini 2.0 Flash as shown in your dashboard
-    const apiURL = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const apiURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
     const prompt = {
       contents: [{
