@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,54 +6,43 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "API Key is missing in Vercel settings." }, { status: 500 });
+      return NextResponse.json({ error: "API Key missing in Vercel." }, { status: 500 });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // THE SEARCH & RESCUE LIST: We will try these names in order until one works
-    const modelNames = [
-      "gemini-2.0-flash", 
-      "gemini-2-flash", 
-      "gemini-1.5-flash", 
-      "gemini-pro"
-    ];
+    // THE DIRECT LINE: We are skipping the SDK and talking to the v1 stable endpoint
+    // We'll try Gemini 2.0 Flash as shown in your dashboard
+    const apiURL = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-    let lastError = "";
-    let script = "";
+    const prompt = {
+      contents: [{
+        parts: [{
+          text: `You are a viral YouTube strategist for ZEEK Media. Write a high-retention script.
+          Topic: ${topic}
+          Length: ${targetLength} minutes
+          Format: Use [0:00] timestamps and [Visual Cues] for the editor.`
+        }]
+      }]
+    };
 
-    // Loop through the models until one responds
-    for (const modelName of modelNames) {
-      try {
-        console.log(`Attempting to connect to: ${modelName}`);
-        const model = genAI.getGenerativeModel({ model: modelName });
-        
-        const prompt = `Write a viral YouTube script for ZEEK Media. 
-        Topic: ${topic}. 
-        Length: ${targetLength} minutes. 
-        Use [0:00] timestamps and [Visual Cues].`;
+    const response = await fetch(apiURL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(prompt)
+    });
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        script = response.text();
-        
-        if (script) break; // We found a winner! Exit the loop.
-      } catch (err: any) {
-        lastError = err.message;
-        console.warn(`${modelName} failed, trying next...`);
-        continue; // Try the next model in the list
-      }
+    const data = await response.json();
+
+    if (!response.ok) {
+      // This will tell us EXACTLY why Google is saying no (e.g., location, key error)
+      return NextResponse.json({ 
+        error: `Google API says: ${data.error?.message || 'Unknown Error'}` 
+      }, { status: response.status });
     }
 
-    if (!script) {
-      throw new Error(`All models failed. Last error: ${lastError}`);
-    }
-
+    const script = data.candidates[0].content.parts[0].text;
     return NextResponse.json({ script });
 
   } catch (error: any) {
-    return NextResponse.json({ 
-      error: `Connection Failed: ${error.message}. Please verify your API key is active in Google AI Studio.` 
-    }, { status: 500 });
+    return NextResponse.json({ error: `System Error: ${error.message}` }, { status: 500 });
   }
 }
