@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Film, Loader2, Sparkles } from 'lucide-react';
+import { Film, Loader2, Sparkles, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,191 +23,105 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [generatedScript, setGeneratedScript] = useState('');
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
-    // BOUNCER REMOVED: Now we only care if the Topic is missing.
     if (!topic) {
       setError('Please describe what your video is about');
       return;
     }
-
     setLoading(true);
     setError('');
     setGeneratedScript('');
-
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          youtubeUrl: youtubeUrl || '', // Send empty string if no URL
-          topic,
-          targetLength,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ youtubeUrl, topic, targetLength }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate script');
-      }
-
+      if (!response.ok) throw new Error(data.error || 'Failed');
       setGeneratedScript(data.script);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+    } catch (err: any) {
+      setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(generatedScript);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 text-white">
-      <nav className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <Film className="w-8 h-8 text-blue-500" />
-              <span className="text-xl font-bold">ScriptAI</span>
-            </Link>
-          </div>
+    <div className="min-h-screen bg-gray-950 text-white">
+      <nav className="border-b border-gray-800 p-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-2">
+            <Film className="text-blue-500" />
+            <span className="font-bold text-xl">ScriptAI</span>
+          </Link>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Generate Your Script</h1>
-          <p className="text-gray-400">
-            Create viral YouTube scripts powered by AI
-          </p>
+      <div className="max-w-7xl mx-auto p-8 grid lg:grid-cols-2 gap-8">
+        <div className="space-y-6">
+          <Card className="bg-gray-900 border-gray-800">
+            <CardHeader>
+              <CardTitle className="text-white">Configure Script</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-gray-400">Inspiration URL (Optional)</Label>
+                <Input 
+                  placeholder="Paste YouTube link here..." 
+                  className="bg-gray-800 border-gray-700 text-white"
+                  value={youtubeUrl}
+                  onChange={(e) => setYoutubeUrl(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="text-gray-400">Video Topic</Label>
+                <Textarea 
+                  placeholder="What is this video about?" 
+                  className="bg-gray-800 border-gray-700 text-white h-32"
+                  value={topic}
+                  onChange={(e) => setTopic(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleGenerate} disabled={loading} className="w-full bg-blue-600">
+                {loading ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
+                Generate Script
+              </Button>
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <Card className="bg-gray-800/50 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-blue-400" />
-                  Script Configuration
-                </CardTitle>
-                <CardDescription className="text-gray-400">
-                  Configure your script generation settings
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="youtube-url" className="text-white">
-                    Inspiration YouTube URL (Optional)
-                  </Label>
-                  <Input
-                    id="youtube-url"
-                    type="url"
-                    placeholder="https://youtube.com/watch?v=... (or leave blank)"
-                    value={youtubeUrl}
-                    onChange={(e) => setYoutubeUrl(e.target.value)}
-                    className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
-                  />
-                  <p className="text-sm text-gray-500">
-                    Optional: Paste a URL to match a specific style
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="topic" className="text-white">
-                    What is your video about?
-                  </Label>
-                  <Textarea
-                    id="topic"
-                    placeholder="Describe your video topic in detail..."
-                    rows={5}
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-500"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="target-length" className="text-white">
-                    Target Length
-                  </Label>
-                  <Select value={targetLength} onValueChange={setTargetLength}>
-                    <SelectTrigger className="bg-gray-900 border-gray-700 text-white">
-                      <SelectValue placeholder="Select length" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-gray-900 border-gray-700">
-                      <SelectItem value="5">5 minutes</SelectItem>
-                      <SelectItem value="10">10 minutes</SelectItem>
-                      <SelectItem value="15">15 minutes</SelectItem>
-                      <SelectItem value="20">20 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {error && (
-                  <div className="bg-red-900/20 border border-red-900/50 rounded-lg p-4">
-                    <p className="text-red-400 text-sm">{error}</p>
-                  </div>
-                )}
-
-                <Button
-                  onClick={handleGenerate}
-                  disabled={loading || !topic} // BOUNCER REMOVED: Button stays active without URL
-                  className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Generating Script...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5 mr-2" />
-                      Generate Script
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div>
-            <Card className="bg-gray-800/50 border-gray-700 h-full">
-              <CardHeader>
-                <CardTitle className="text-white">Generated Script</CardTitle>
-                <CardDescription className="text-gray-400">
-                  Your AI-generated script will appear here
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="flex items-center justify-center py-20">
-                    <div className="text-center">
-                      <Loader2 className="w-12 h-12 text-blue-400 animate-spin mx-auto mb-4" />
-                      <p className="text-gray-400">Generating your viral script...</p>
-                    </div>
-                  </div>
-                ) : generatedScript ? (
-                  <div className="bg-gray-900 rounded-lg p-6 border border-gray-700">
-                    <div className="prose prose-invert max-w-none">
-                      <pre className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed font-sans">
-                        {generatedScript}
-                      </pre>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center py-20 text-gray-500">
-                    <div className="text-center">
-                      <Film className="w-16 h-16 mx-auto mb-4 opacity-20" />
-                      <p>Click Generate to see your script here</p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+        <Card className="bg-gray-900 border-gray-800 relative">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-white">Generated Script</CardTitle>
+            {generatedScript && (
+              <Button variant="outline" size="sm" onClick={copyToClipboard} className="text-white border-gray-700 hover:bg-gray-800">
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex flex-col items-center py-20 text-gray-500">
+                <Loader2 className="w-10 h-10 animate-spin mb-4" />
+                <p>Analyzing and writing...</p>
+              </div>
+            ) : generatedScript ? (
+              <pre className="whitespace-pre-wrap text-gray-300 text-sm font-sans">{generatedScript}</pre>
+            ) : (
+              <p className="text-gray-600 text-center py-20">Your script will appear here.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
