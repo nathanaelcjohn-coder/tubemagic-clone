@@ -7,30 +7,54 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "Key Missing: Please check Vercel settings." }, { status: 500 });
+      return NextResponse.json({ error: "API Key is missing in Vercel settings." }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // UPDATED FOR 2026: Using the Gemini 2 Flash model from your dashboard
-    const model = genAI.getGenerativeModel({ model: "gemini-2-flash" });
+    // THE SEARCH & RESCUE LIST: We will try these names in order until one works
+    const modelNames = [
+      "gemini-2.0-flash", 
+      "gemini-2-flash", 
+      "gemini-1.5-flash", 
+      "gemini-pro"
+    ];
 
-    const prompt = `You are a viral YouTube strategist for ZEEK Media. Write a production-ready script.
-    Topic: ${topic}
-    Target Length: ${targetLength} minutes
-    Include [0:00] timestamps and specific [Visual Cues] for the editor.
-    Structure: Compelling Hook -> Value-Packed Middle -> Call to Action.`;
+    let lastError = "";
+    let script = "";
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const script = response.text();
+    // Loop through the models until one responds
+    for (const modelName of modelNames) {
+      try {
+        console.log(`Attempting to connect to: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
+        
+        const prompt = `Write a viral YouTube script for ZEEK Media. 
+        Topic: ${topic}. 
+        Length: ${targetLength} minutes. 
+        Use [0:00] timestamps and [Visual Cues].`;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        script = response.text();
+        
+        if (script) break; // We found a winner! Exit the loop.
+      } catch (err: any) {
+        lastError = err.message;
+        console.warn(`${modelName} failed, trying next...`);
+        continue; // Try the next model in the list
+      }
+    }
+
+    if (!script) {
+      throw new Error(`All models failed. Last error: ${lastError}`);
+    }
 
     return NextResponse.json({ script });
 
   } catch (error: any) {
-    console.error('Gemini 2 Error:', error.message);
     return NextResponse.json({ 
-      error: `Gemini 2 Connection Error: ${error.message}.` 
+      error: `Connection Failed: ${error.message}. Please verify your API key is active in Google AI Studio.` 
     }, { status: 500 });
   }
 }
