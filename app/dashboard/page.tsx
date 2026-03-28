@@ -26,7 +26,7 @@ export default function Dashboard() {
 
   const handleGenerate = async () => {
     if (!youtubeUrl || !topic) {
-      setError('Please fill in all required fields');
+      setError('Please fill in all fields');
       return;
     }
 
