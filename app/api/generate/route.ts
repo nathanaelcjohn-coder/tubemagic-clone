@@ -5,7 +5,6 @@ export async function POST(request: NextRequest) {
   try {
     const { youtubeUrl, topic, targetLength } = await request.json();
 
-    // 1. The Bouncer is relaxed: URL is no longer strictly required
     if (!topic || !targetLength) {
       return NextResponse.json(
         { error: 'Missing required fields (Topic and Target Length)' },
@@ -23,7 +22,6 @@ export async function POST(request: NextRequest) {
 
     let transcript = "";
 
-    // 2. Only run the scraper IF the user actually pasted a link
     if (youtubeUrl && youtubeUrl.trim() !== '') {
       try {
         const YoutubeTranscript = (await import('youtube-transcript')).YoutubeTranscript;
@@ -31,16 +29,16 @@ export async function POST(request: NextRequest) {
         transcript = transcriptData.map((item: any) => item.text).join(' ');
       } catch (error) {
         return NextResponse.json(
-          { error: 'Failed to fetch YouTube transcript. Make sure the video has captions enabled, or leave the URL blank to generate from scratch.' },
+          { error: 'Failed to fetch YouTube transcript. Make sure the video has captions enabled, or leave blank.' },
           { status: 400 }
         );
       }
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    // FIXED: Changed model name to gemini-1.5-flash which is widely supported
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    // 3. Dynamic Prompting: Tell the AI what to do based on the data it has
     let systemPrompt = `You are an expert YouTube scriptwriter specializing in high-retention content. `;
     
     if (transcript) {
@@ -62,7 +60,7 @@ Target video length: ${targetLength} minutes`;
     let prompt = systemPrompt + `\n\nUSER'S VIDEO TOPIC:\n${topic}\n\n`;
 
     if (transcript) {
-        prompt += `INSPIRATION VIDEO TRANSCRIPT:\n${transcript}\n\nPlease generate a complete, production-ready script following the style and pacing of the inspiration video.`;
+        prompt += `INSPIRATION VIDEO TRANSCRIPT:\n${transcript}\n\nPlease generate a complete script following the style and pacing of the inspiration video.`;
     } else {
         prompt += `Please generate a complete, production-ready script about this topic.`;
     }
@@ -75,7 +73,7 @@ Target video length: ${targetLength} minutes`;
   } catch (error) {
     console.error('Error generating script:', error);
     return NextResponse.json(
-      { error: 'Failed to generate script. Please try again.' },
+      { error: 'AI Brain connection failed. Please check your API key in Vercel settings.' },
       { status: 500 }
     );
   }
