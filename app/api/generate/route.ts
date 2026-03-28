@@ -3,31 +3,34 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export async function POST(request: NextRequest) {
   try {
-    const { youtubeUrl, topic, targetLength } = await request.json();
+    const { topic, targetLength } = await request.json();
     const apiKey = process.env.GEMINI_API_KEY;
 
-    // DIAGNOSTIC 1: Check if key exists
     if (!apiKey) {
-      return NextResponse.json({ error: "Key Missing: Vercel is not passing the GEMINI_API_KEY to the app." }, { status: 500 });
+      return NextResponse.json({ error: "API Key is missing in Vercel settings." }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // DIAGNOSTIC 2: Use the most stable, basic model name
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Using the most legacy-stable model name to bypass the 404 error
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    const prompt = `Write a viral YouTube script about: ${topic}. Length: ${targetLength} minutes. Use [0:00] timestamps.`;
+    const prompt = `You are a viral YouTube strategist. Write a complete, high-retention script.
+    Topic: ${topic}
+    Target Length: ${targetLength} minutes
+    Include [0:00] timestamps and [Visual Cues] for the editor.
+    Make it engaging for a Bangalore-based marketing audience.`;
 
-    try {
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return NextResponse.json({ script: response.text() });
-    } catch (aiError: any) {
-      // THIS WILL SHOW US THE REAL GOOGLE ERROR ON THE SCREEN
-      return NextResponse.json({ error: `Google AI Error: ${aiError.message}` }, { status: 500 });
-    }
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const script = response.text();
+
+    return NextResponse.json({ script });
 
   } catch (error: any) {
-    return NextResponse.json({ error: `System Error: ${error.message}` }, { status: 500 });
+    console.error('Final Debug:', error.message);
+    return NextResponse.json({ 
+      error: `Connection Issue: ${error.message}. Please ensure the GEMINI_API_KEY is correct in Vercel.` 
+    }, { status: 500 });
   }
 }
