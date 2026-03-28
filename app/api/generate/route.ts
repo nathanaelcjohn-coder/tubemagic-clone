@@ -5,9 +5,10 @@ export async function POST(request: NextRequest) {
   try {
     const { youtubeUrl, topic, targetLength } = await request.json();
 
-    if (!youtubeUrl || !topic || !targetLength) {
+    // 1. The Bouncer is relaxed: URL is no longer strictly required
+    if (!topic || !targetLength) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields (Topic and Target Length)' },
         { status: 400 }
       );
     }
@@ -20,24 +21,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let transcript;
-    try {
-      const YoutubeTranscript = (await import('youtube-transcript')).YoutubeTranscript;
-      const transcriptData = await YoutubeTranscript.fetchTranscript(youtubeUrl);
-      transcript = transcriptData.map((item: any) => item.text).join(' ');
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Failed to fetch YouTube transcript. Make sure the video has captions enabled.' },
-        { status: 400 }
-      );
+    let transcript = "";
+
+    // 2. Only run the scraper IF the user actually pasted a link
+    if (youtubeUrl && youtubeUrl.trim() !== '') {
+      try {
+        const YoutubeTranscript = (await import('youtube-transcript')).YoutubeTranscript;
+        const transcriptData = await YoutubeTranscript.fetchTranscript(youtubeUrl);
+        transcript = transcriptData.map((item: any) => item.text).join(' ');
+      } catch (error) {
+        return NextResponse.json(
+          { error: 'Failed to fetch YouTube transcript. Make sure the video has captions enabled, or leave the URL blank to generate from scratch.' },
+          { status: 400 }
+        );
+      }
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
-    const systemPrompt = `You are an expert YouTube scriptwriter. Analyze the provided transcript for pacing and hook structure. Write a new, highly engaging script about the user's topic using a similar framework. Include timestamps and visual cues.
+    // 3. Dynamic Prompting: Tell the AI what to do based on the data it has
+    let systemPrompt = `You are an expert YouTube scriptwriter specializing in high-retention content. `;
+    
+    if (transcript) {
+        systemPrompt += `Analyze the provided transcript for pacing and hook structure. Write a new, highly engaging script about the user's topic using a similar framework. Include timestamps and visual cues.`;
+    } else {
+        systemPrompt += `Write a highly engaging, viral YouTube script from scratch about the user's topic using standard best practices for audience retention. Include timestamps and visual cues.`;
+    }
 
-The script should be formatted professionally with:
+    systemPrompt += `\n\nThe script should be formatted professionally with:
 - Clear timestamps (e.g., [0:00], [0:30], [1:00])
 - Visual cues in brackets (e.g., [SHOW GRAPH], [CUT TO B-ROLL])
 - Engaging hooks and transitions
@@ -47,15 +59,13 @@ The script should be formatted professionally with:
 
 Target video length: ${targetLength} minutes`;
 
-    const prompt = `${systemPrompt}
+    let prompt = systemPrompt + `\n\nUSER'S VIDEO TOPIC:\n${topic}\n\n`;
 
-INSPIRATION VIDEO TRANSCRIPT:
-${transcript}
-
-USER'S VIDEO TOPIC:
-${topic}
-
-Please generate a complete, production-ready script following the style and pacing of the inspiration video.`;
+    if (transcript) {
+        prompt += `INSPIRATION VIDEO TRANSCRIPT:\n${transcript}\n\nPlease generate a complete, production-ready script following the style and pacing of the inspiration video.`;
+    } else {
+        prompt += `Please generate a complete, production-ready script about this topic.`;
+    }
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
