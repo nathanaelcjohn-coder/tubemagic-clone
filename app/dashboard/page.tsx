@@ -77,7 +77,7 @@ export default function Dashboard() {
           <Card className="bg-gray-900 border-gray-800 shadow-xl">
             <CardContent className="space-y-6 pt-6">
               <div className="space-y-2">
-                <Label className="text-gray-300">Inspiration URL (Optional)</Label>
+                <Label className="text-gray-300">YouTube URL</Label>
                 <Input 
                   placeholder="Paste a YouTube link to match its style..." 
                   className="bg-gray-800 border-gray-700 text-white focus:ring-blue-500"
@@ -89,7 +89,7 @@ export default function Dashboard() {
               <div className="space-y-2">
                 <Label className="text-gray-300">Video Topic</Label>
                 <Textarea 
-                  placeholder="What is this video about? (e.g. How to organize a jewelry exhibition in Bangalore)" 
+                  placeholder="What is this video about? (Descibe what you want your video to be about.))" 
                   className="bg-gray-800 border-gray-700 text-white h-40 resize-none focus:ring-blue-500"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
