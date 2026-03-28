@@ -7,19 +7,19 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      return NextResponse.json({ error: "API Key is missing in Vercel settings." }, { status: 500 });
+      return NextResponse.json({ error: "Key Missing: Please check Vercel settings." }, { status: 500 });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Using the most legacy-stable model name to bypass the 404 error
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    // UPDATED FOR 2026: Using the Gemini 2 Flash model from your dashboard
+    const model = genAI.getGenerativeModel({ model: "gemini-2-flash" });
 
-    const prompt = `You are a viral YouTube strategist. Write a complete, high-retention script.
+    const prompt = `You are a viral YouTube strategist for ZEEK Media. Write a production-ready script.
     Topic: ${topic}
     Target Length: ${targetLength} minutes
-    Include [0:00] timestamps and [Visual Cues] for the editor.
-    Make it engaging for a Bangalore-based marketing audience.`;
+    Include [0:00] timestamps and specific [Visual Cues] for the editor.
+    Structure: Compelling Hook -> Value-Packed Middle -> Call to Action.`;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
@@ -28,9 +28,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ script });
 
   } catch (error: any) {
-    console.error('Final Debug:', error.message);
+    console.error('Gemini 2 Error:', error.message);
     return NextResponse.json({ 
-      error: `Connection Issue: ${error.message}. Please ensure the GEMINI_API_KEY is correct in Vercel.` 
+      error: `Gemini 2 Connection Error: ${error.message}.` 
     }, { status: 500 });
   }
 }
