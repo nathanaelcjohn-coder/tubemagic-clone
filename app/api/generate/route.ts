@@ -2,40 +2,53 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { topic, targetLength } = await request.json();
+    const { youtubeUrl, topic, targetLength } = await request.json();
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json({ error: "API Key missing in Vercel." }, { status: 500 });
     }
 
-    // THE DIRECT LINE: We are skipping the SDK and talking to the v1 stable endpoint
-    // We'll try Gemini 2.0 Flash as shown in your dashboard
+    let transcript = "";
+    // 1. ATTEMPT TO SCRAPE TRANSCRIPT (The TubeMagic feature)
+    if (youtubeUrl && youtubeUrl.trim() !== '') {
+      try {
+        const YoutubeTranscript = (await import('youtube-transcript')).YoutubeTranscript;
+        const transcriptData = await YoutubeTranscript.fetchTranscript(youtubeUrl);
+        transcript = transcriptData.map((item: any) => item.text).join(' ');
+      } catch (e) {
+        console.warn("Transcript fetch failed, proceeding with topic only.");
+      }
+    }
+
+    // 2. THE UPDATED 2026 BETA URL (Your specific request)
     const apiURL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-    const prompt = {
+    const systemInstruction = `You are an expert YouTube Scriptwriter. Your goal is to write a high-retention, viral-ready script tailored to the user's specific topic and target length (${targetLength} minutes). 
+    Use a professional structure: Engaging Hook, Value-Driven Body, and Clear Call to Action. 
+    Include [0:00] timestamps and [Visual Cues] for the editor.`;
+
+    const userPrompt = transcript 
+      ? `INSPIRATION STYLE: Match the pacing and tone of this transcript closely: ${transcript.substring(0, 5000)}\n\nUSER TOPIC: ${topic}`
+      : `TOPIC: ${topic}`;
+
+    const promptBody = {
       contents: [{
-        parts: [{
-          text: `You are a viral YouTube strategist for ZEEK Media. Write a high-retention script.
-          Topic: ${topic}
-          Length: ${targetLength} minutes
-          Format: Use [0:00] timestamps and [Visual Cues] for the editor.`
-        }]
+        parts: [{ text: `${systemInstruction}\n\n${userPrompt}` }]
       }]
     };
 
     const response = await fetch(apiURL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(prompt)
+      body: JSON.stringify(promptBody)
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      // This will tell us EXACTLY why Google is saying no (e.g., location, key error)
       return NextResponse.json({ 
-        error: `Google API says: ${data.error?.message || 'Unknown Error'}` 
+        error: `Google API Error: ${data.error?.message || 'Check model availability'}` 
       }, { status: response.status });
     }
 
