@@ -88,7 +88,7 @@ export default function Dashboard() {
           <Card className="bg-gray-900 border-gray-800 shadow-2xl">
             <CardContent className="space-y-6 pt-8">
               <div className="space-y-2">
-                <Label className="text-gray-400 font-medium">Style Inspiration (Optional)</Label>
+                <Label className="text-white-400 font-medium">Style Inspiration (Optional)</Label>
                 <Input 
                   placeholder="URL of a video you want to mimic..." 
                   className="bg-gray-800 border-gray-700 h-12 focus:border-blue-500 transition-all"
@@ -98,9 +98,9 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-gray-400 font-medium">What's the story?</Label>
+                <Label className="text-white-400 font-medium">What's the story?</Label>
                 <Textarea 
-                  placeholder="Be specific. For Flames of the Forest, mention 'earthy elegance' or 'handcrafted jewelry'..." 
+                  placeholder="Be specific. Describe in detail what the video should be about" 
                   className="bg-gray-800 border-gray-700 h-40 resize-none"
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
@@ -109,15 +109,17 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-2 gap-4">
                  <div className="space-y-2">
-                    <Label className="text-gray-400">Length</Label>
+                    <Label className="text-white-400">Target Length</Label>
                     <Select value={targetLength} onValueChange={setTargetLength}>
                       <SelectTrigger className="bg-gray-800 border-gray-700">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                        <SelectItem value="2">2 min</SelectItem>
-                        <SelectItem value="5">5 min</SelectItem>
-                        <SelectItem value="10">10 min</SelectItem>
+                        <SelectItem value="2">2 minutes (Shorts/Intro)</SelectItem>
+                        <SelectItem value="5">5 minutes (Standard)</SelectItem>
+                        <SelectItem value="10">10 minutes (Deep Dive)</SelectItem>
+                        <SelectItem value="10">15 minutes (Feature)</SelectItem>
+                        <SelectItem value="10">30 minutes (Masterclass)</SelectItem>
                       </SelectContent>
                     </Select>
                  </div>
