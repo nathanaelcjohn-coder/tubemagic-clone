@@ -6,8 +6,8 @@ import { UserButton } from "@clerk/nextjs";
 import { Film, Loader2, Sparkles, Copy, Check, Clock, Video, Zap, Layers, Play, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -74,11 +74,11 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label className="text-xs text-gray-500 uppercase">Style Reference</Label>
+                <label className="text-xs text-gray-500 uppercase">Style Reference</label>
                 <Input placeholder="YouTube URL..." className="bg-black border-white/10 text-sm" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs text-gray-500 uppercase">Script Topic</Label>
+                <label className="text-xs text-gray-500 uppercase">Script Topic</label>
                 <Textarea placeholder="Describe the scene..." className="bg-black border-white/10 h-32 text-sm" value={topic} onChange={(e) => setTopic(e.target.value)} />
               </div>
               <Button onClick={handleGenerate} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-500 font-bold">
@@ -95,7 +95,7 @@ export default function Dashboard() {
             <CardHeader className="border-b border-white/5 flex flex-row justify-between items-center">
               <CardTitle className="text-sm text-gray-400">SCRIPT CANVAS</CardTitle>
               {generatedScript && (
-                <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(generatedScript)}>
+                <Button onClick={() => navigator.clipboard.writeText(generatedScript)} className="p-1 hover:bg-white/10 rounded transition">
                   <Copy className="w-4 h-4" />
                 </Button>
               )}
@@ -147,7 +147,7 @@ export default function Dashboard() {
                   </Button>
 
                   <div className="space-y-2">
-                    <Label className="text-[10px] text-gray-600 uppercase tracking-widest">Scene Queue</Label>
+                    <label className="text-[10px] text-gray-600 uppercase tracking-widest">Scene Queue</label>
                     <div className="space-y-1">
                       <div className="p-2 bg-white/5 rounded text-[10px] flex justify-between border border-white/5">
                         <span>[Scene 1] Intro Hook Clip</span>
