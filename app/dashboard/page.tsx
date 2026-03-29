@@ -4,13 +4,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { UserButton } from "@clerk/nextjs";
 import { Film, Loader2, Sparkles, Copy, Check, Clock, Video, Zap, Layers, Play, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Textarea } from '../../components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
 export default function Dashboard() {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [topic, setTopic] = useState('');
