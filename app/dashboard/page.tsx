@@ -2,18 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Film, Loader2, Sparkles, Copy, Check, Clock, Video, Zap } from 'lucide-react';
+import { UserButton } from "@clerk/nextjs";
+import { Film, Loader2, Sparkles, Copy, Check, Clock, Video, Zap, Layers, Play, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function Dashboard() {
@@ -23,19 +18,13 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [videoLoading, setVideoLoading] = useState(false);
   const [generatedScript, setGeneratedScript] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
+  const [videoStatus, setVideoStatus] = useState('idle'); // idle, generating, ready
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
   const handleGenerate = async () => {
-    if (!topic) {
-      setError('Please describe what your video is about');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    setGeneratedScript('');
-    setVideoUrl('');
+    if (!topic) { setError('Please describe your video'); return; }
+    setLoading(true); setError(''); setGeneratedScript(''); setVideoStatus('idle');
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -45,139 +34,140 @@ export default function Dashboard() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed');
       setGeneratedScript(data.script);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err: any) { setError(err.message); } finally { setLoading(false); }
   };
 
-  const handleGenerateVideo = async () => {
+  const startVideoEngine = () => {
     setVideoLoading(true);
-    // Simulating the Veo/Video API call for the Investor Demo
     setTimeout(() => {
-      setVideoUrl('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNHJueWp6Znd6Znd6Znd6Znd6Znd6Znd6Znd6Znd6Znd6Znd6Znd6Znd6JmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxxcaeqpIu4/giphy.gif');
+      setVideoStatus('ready');
       setVideoLoading(false);
-    }, 5000);
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generatedScript);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    }, 4000);
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white font-sans">
-      <nav className="border-b border-gray-800 p-4 sticky top-0 bg-gray-950/80 backdrop-blur-md z-50">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-2 group">
-            <Film className="text-blue-500 group-hover:rotate-12 transition-transform" />
-            <span className="font-bold text-xl">ScriptAI <span className="text-xs bg-blue-600 px-2 py-0.5 rounded-full ml-2">PRO</span></span>
+    <div className="min-h-screen bg-[#050505] text-white">
+      {/* Premium Navbar */}
+      <nav className="border-b border-white/5 p-4 sticky top-0 bg-black/80 backdrop-blur-xl z-50">
+        <div className="max-w-screen-2xl mx-auto flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-2">
+            <div className="bg-blue-600 p-1.5 rounded-lg">
+              <Film className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-xl tracking-tighter">ScriptAI Studio</span>
           </Link>
+          <div className="flex items-center gap-4">
+            <UserButton afterSignOutUrl="/" />
+          </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto p-6 lg:p-12 grid lg:grid-cols-2 gap-12">
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-extrabold mb-3">The Studio</h1>
-            <p className="text-gray-400 text-lg">Turn ideas into production-ready scripts and visuals.</p>
-          </div>
-
-          <Card className="bg-gray-900 border-gray-800 shadow-2xl">
-            <CardContent className="space-y-6 pt-8">
-              <div className="space-y-2">
-                <Label className="text-gray-400 font-medium">Style Inspiration (Optional)</Label>
-                <Input 
-                  placeholder="URL of a video you want to mimic..." 
-                  className="bg-gray-800 border-gray-700 h-12 focus:border-blue-500 transition-all"
-                  value={youtubeUrl}
-                  onChange={(e) => setYoutubeUrl(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-gray-400 font-medium">What's the story?</Label>
-                <Textarea 
-                  placeholder="Be specific. Describe in detail what the video should be about" 
-                  className="bg-gray-800 border-gray-700 h-40 resize-none"
-                  value={topic}
-                  onChange={(e) => setTopic(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                    <Label className="text-gray-400">Target Length</Label>
-                    <Select value={targetLength} onValueChange={setTargetLength}>
-                      <SelectTrigger className="bg-gray-800 border-gray-700">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-gray-800 border-gray-700 text-white">
-                        <SelectItem value="2">2 minutes (Shorts/Intro)</SelectItem>
-                        <SelectItem value="5">5 minutes (Standard)</SelectItem>
-                        <SelectItem value="10">10 minutes (Deep Dive)</SelectItem>
-                        <SelectItem value="15">15 minutes (Feature)</SelectItem>
-                        <SelectItem value="30">30 minutes (Masterclass)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                 </div>
-                 <div className="flex items-end">
-                    <Button onClick={handleGenerate} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 h-10 shadow-lg shadow-blue-900/20">
-                      {loading ? <Loader2 className="animate-spin mr-2" /> : <Sparkles className="mr-2" />}
-                      {loading ? 'Thinking...' : 'Generate Script'}
-                    </Button>
-                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card className="bg-gray-900 border-gray-800 h-full flex flex-col min-h-[600px] overflow-hidden">
-            <CardHeader className="border-b border-gray-800 flex flex-row justify-between items-center bg-gray-900/50">
-              <CardTitle className="text-sm uppercase tracking-widest text-gray-500">Output Window</CardTitle>
-              <div className="flex gap-2">
-                {generatedScript && (
-                  <>
-                    <Button variant="outline" size="sm" onClick={copyToClipboard} className="border-gray-700 text-gray-300">
-                      {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                    </Button>
-                    <Button onClick={handleGenerateVideo} disabled={videoLoading} size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
-                      {videoLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
-                      Create Video
-                    </Button>
-                  </>
-                )}
-              </div>
+      <div className="max-w-screen-2xl mx-auto p-6 grid lg:grid-cols-12 gap-6 h-[calc(100vh-80px)]">
+        
+        {/* Input Controls (3 cols) */}
+        <aside className="lg:col-span-3 space-y-4 overflow-auto pr-2 custom-scrollbar">
+          <Card className="bg-[#111] border-white/5">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-sm text-gray-400 flex items-center gap-2">
+                <Settings className="w-4 h-4" /> PROJECT SETTINGS
+              </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-auto p-8">
-              {videoUrl && (
-                <div className="mb-8 rounded-xl overflow-hidden border border-purple-500/30 shadow-2xl shadow-purple-500/10">
-                   <img src={videoUrl} alt="AI Preview" className="w-full h-48 object-cover" />
-                   <div className="p-3 bg-purple-900/20 text-xs text-purple-300 text-center">
-                      Veo Prototype: This is a visual representation of your script hook.
-                   </div>
-                </div>
-              )}
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500 uppercase">Style Reference</Label>
+                <Input placeholder="YouTube URL..." className="bg-black border-white/10 text-sm" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500 uppercase">Script Topic</Label>
+                <Textarea placeholder="Describe the scene..." className="bg-black border-white/10 h-32 text-sm" value={topic} onChange={(e) => setTopic(e.target.value)} />
+              </div>
+              <Button onClick={handleGenerate} disabled={loading} className="w-full bg-blue-600 hover:bg-blue-500 font-bold">
+                {loading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                Run AI Writer
+              </Button>
+            </CardContent>
+          </Card>
+        </aside>
 
+        {/* Script Editor (5 cols) */}
+        <main className="lg:col-span-5 flex flex-col gap-4">
+          <Card className="bg-[#111] border-white/5 flex-1 flex flex-col overflow-hidden">
+            <CardHeader className="border-b border-white/5 flex flex-row justify-between items-center">
+              <CardTitle className="text-sm text-gray-400">SCRIPT CANVAS</CardTitle>
+              {generatedScript && (
+                <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(generatedScript)}>
+                  <Copy className="w-4 h-4" />
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent className="flex-1 overflow-auto p-6 font-mono text-sm leading-relaxed text-gray-400">
               {loading ? (
-                <div className="flex flex-col items-center justify-center h-full py-20 text-gray-600 animate-pulse">
-                  <Sparkles className="w-12 h-12 mb-4 text-blue-500" />
-                  <p className="text-xl font-medium">Crafting your narrative...</p>
-                </div>
+                <div className="h-full flex items-center justify-center opacity-50">Writing script...</div>
               ) : generatedScript ? (
-                <pre className="whitespace-pre-wrap text-gray-300 text-sm leading-relaxed font-sans">{generatedScript}</pre>
+                <pre className="whitespace-pre-wrap">{generatedScript}</pre>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full py-20 text-gray-700 opacity-20">
-                  <Video className="w-24 h-24 mb-4" />
-                  <p className="text-2xl font-bold">Awaiting Instructions</p>
+                <div className="h-full flex items-center justify-center opacity-20 italic">Awaiting AI Generation</div>
+              )}
+            </CardContent>
+          </Card>
+        </main>
+
+        {/* AI Video Editor (4 cols) */}
+        <section className="lg:col-span-4 space-y-4">
+          <Card className="bg-[#111] border-white/5 h-full flex flex-col">
+            <CardHeader className="border-b border-white/5">
+              <CardTitle className="text-sm text-gray-400 flex items-center gap-2">
+                <Layers className="w-4 h-4" /> VEO VIDEO ENGINE
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-4 flex flex-col h-full">
+              {generatedScript ? (
+                <div className="space-y-4">
+                  <div className="aspect-video bg-black rounded-lg border border-white/10 flex items-center justify-center relative group overflow-hidden">
+                    {videoStatus === 'ready' ? (
+                      <div className="absolute inset-0 bg-purple-900/20 flex flex-col items-center justify-center">
+                         <Play className="w-12 h-12 text-white fill-white mb-2" />
+                         <span className="text-xs text-purple-300 font-bold">READY TO EXPORT</span>
+                      </div>
+                    ) : (
+                      <div className="text-center p-6">
+                        <Video className="w-10 h-10 mx-auto mb-2 text-gray-800" />
+                        <p className="text-xs text-gray-600">Sync script visual cues to generate footage</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button 
+                    onClick={startVideoEngine} 
+                    disabled={videoLoading || videoStatus === 'ready'}
+                    className="w-full bg-purple-600 hover:bg-purple-500 font-bold h-12"
+                  >
+                    {videoLoading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+                    {videoStatus === 'ready' ? 'Visuals Generated' : 'Generate AI B-Roll'}
+                  </Button>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] text-gray-600 uppercase tracking-widest">Scene Queue</Label>
+                    <div className="space-y-1">
+                      <div className="p-2 bg-white/5 rounded text-[10px] flex justify-between border border-white/5">
+                        <span>[Scene 1] Intro Hook Clip</span>
+                        <span className="text-green-500 text-[8px]">PROMPT READY</span>
+                      </div>
+                      <div className="p-2 bg-white/5 rounded text-[10px] flex justify-between border border-white/5">
+                        <span>[Scene 2] Topic Visual B-Roll</span>
+                        <span className="text-green-500 text-[8px]">PROMPT READY</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full flex items-center justify-center text-center opacity-20 grayscale">
+                  <p className="text-xs uppercase tracking-tighter">Generate script first to unlock video suite</p>
                 </div>
               )}
             </CardContent>
           </Card>
-        </div>
+        </section>
       </div>
     </div>
   );
