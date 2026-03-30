@@ -16,16 +16,32 @@ export default function Dashboard() {
   const [activeView, setActiveView] = useState<'script' | 'video'>('script');
   const [isScriptFinished, setIsScriptFinished] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedScript, setGeneratedScript] = useState('');
 
   // --- 2. THE SIMULATION LOGIC ---
-  const handleRunAIWriter = async () => {
+ const handleRunAIWriter = async () => {
     setIsGenerating(true);
     
-    // Simulates a 3-second wait for the AI to finish writing
-    setTimeout(() => {
+    try {
+      // Send the data to your new backend route
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, duration, youtubeUrl })
+      });
+      
+      const data = await response.json();
+      
+      // Save the real AI script and trigger the purple button
+      setGeneratedScript(data.script);
+      setIsScriptFinished(true);
+    } catch (error) {
+      console.error("Failed to generate:", error);
+      setGeneratedScript("Whoops! Something went wrong generating the script.");
+      setIsScriptFinished(true);
+    } finally {
       setIsGenerating(false);
-      setIsScriptFinished(true); // Triggers the "Generate Video" button to pop up!
-    }, 3000);
+    }
   };
 
   // --- 3. THE UI LAYOUT ---
@@ -110,7 +126,9 @@ export default function Dashboard() {
               <div className="flex-1 overflow-auto text-gray-300 text-sm leading-relaxed space-y-4">
                 {isScriptFinished ? (
                     <div>
-                      <p className="mb-4">Okay, as an expert YouTube strategist, I'm going to craft a script that doesn't just inform, but *engages*, *motivates*, and most importantly, *retains* viewers...</p>
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-200">
+                      {generatedScript}
+                    </div>
                       <p className="font-bold text-white">**YouTube Video Title:** STOP Wasting Time: The ONLY 5 Ways You NEED to Get Fit (Proven by Science!)</p>
                       <p className="mb-4 text-gray-400">**(Thumbnail Idea: Energetic person mid-workout, a clean infographic with "5 WAYS," and an exclamation mark.)**</p>
                       <p className="font-bold text-blue-400">**[0:00] HOOK - The Frustration & The Promise**</p>
