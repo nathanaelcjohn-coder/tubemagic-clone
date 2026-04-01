@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     const { topic, duration, youtubeUrl, format } = body;
 
     // --- AI GENERATION PHASE ---
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
 
     const prompt = `You are an expert YouTube scriptwriter. 
     Write a highly engaging YouTube script about: "${topic}". 
