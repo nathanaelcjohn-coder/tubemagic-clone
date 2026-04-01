@@ -27,4 +27,25 @@ export async function POST(req: Request) {
     console.error('AI Generation Error:', error);
     return NextResponse.json({ error: 'Failed to generate script' }, { status: 500 });
   }
+  // 1. Initialize Supabase at the top of your file
+import { createClient } from '@supabase/supabase-js';
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!, 
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+// ... inside your POST function, after the AI generates the 'text' variable ...
+
+// 2. Push the data to your table
+const { data, error } = await supabase
+  .from('your_table_name') // Change this to your actual Supabase table name!
+  .insert([
+    { 
+      topic: topic, 
+      script: text, 
+      created_at: new Date().toISOString() 
+    }
+  ]);
+
+if (error) console.error("Supabase Save Error:", error);
 }
